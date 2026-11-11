@@ -1,0 +1,8 @@
+1. spatial partitioning
+2. implement adding more boids in an interval
+3. add text!!!!!
+4. vega and altair in the background moving towards each other
+
+STRETCH: 
+    - clickable boids that open and close a text overlay
+    - bird model

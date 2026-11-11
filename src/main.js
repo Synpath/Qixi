@@ -9,8 +9,10 @@ let scene, camera, renderer
 
 let FOV, boidDistance, height, width
 
-let boidNum, range, cube
+let boidNum, range, cube, cellSize
+
 let boids = [];
+let grid = new Map();
 let dummy = new THREE.Object3D();
 
 const container = document.getElementById("container");
@@ -39,8 +41,9 @@ function init() {
     });
 
     boidDistance = 20; //20
-    boidNum = 100;
+    boidNum = 1;
     range = 7;
+    cellSize = range;
 
     FOV = THREE.MathUtils.degToRad(camera.fov);
     height = 2 * Math.tan(FOV / 2) * boidDistance;
@@ -61,7 +64,10 @@ function init() {
             y: y,
             dx: Math.random(),
             dy: Math.random(),
-            dz: 0
+            dz: 0,
+
+            nextDX: 0,
+            nextDY:0,
         });
 
         dummy.position.set(x, y, z);
@@ -71,28 +77,14 @@ function init() {
     }
     scene.add(cube);
 
-    // for (let i = 0; i < boidNum; i++) {
-    //     let geom = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    //     let mat = new THREE.MeshBasicMaterial({color: 0x00ff00});
-    //     let cube = new THREE.Mesh(geom, mat);
-    //     boids[boids.length] = {
-    //         mesh: cube,
-    //         dx: Math.random(),
-    //         dy: Math.random(),
-    //         dz: 0
-    //     }
-
-    //     cube.position.x = (Math.random() - 0.5) * (width - 0.5);
-    //     cube.position.y = (Math.random() - 0.5) * (height - 0.5);
-    //     cube.position.z = -boidDistance;
-    //     scene.add(cube);
-    // }
-
     animate();
 
     let test = "hello world! my name is blah blah and today i'll be doing pblah blah again\n hello again its me :D";
     typeWriter(test, "textBox", 50, false);
 }
+
+// get the cell where the boid is in
+// 
 
 // ---------------------------------------
 function updateMat(index) {
@@ -107,78 +99,39 @@ function updateMat(index) {
 
 function inBounds(index) {
     const turnFactor = 0.015;
-    const margin = 10;
+    const marginX = 3; //10
+    const marginY = 10;
 
     let x = boids[index].x;
     let y = boids[index].y;
 
-    if ((x < (-width/2 + 0.5) + margin)) {
+    if ((x < (-width/2 + 0.5) + marginX)) {
         boids[index].dx += turnFactor;
     }
 
-    if ((x > (width / 2 - 0.5) - margin)) {
+    if ((x > (width / 2 - 0.5) - marginX)) {
         boids[index].dx -= turnFactor;
     }
 
-    if ((y < (-height/2 + 0.5) + margin)) {
+    if ((y < (-height/2 + 0.5) + marginY)) {
         boids[index].dy += turnFactor;
     }
 
-    if ((y > (height / 2 - 0.5) - margin)) {
+    if ((y > (height / 2 - 0.5) - marginY)) {
         boids[index].dy -= turnFactor;
     }
 }
 
-// function inBounds(boid) {
-//     const turnFactor = 0.015;
-//     const margin = 10;
-
-//     if ((boid.mesh.position.x < (-width/2 + 0.5) + margin)) {
-//         boid.dx += turnFactor;
-//     }
-
-//     if ((boid.mesh.position.x > (width / 2 - 0.5) - margin)) {
-//         boid.dx -= turnFactor;
-//     }
-
-//     if ((boid.mesh.position.y < (-height/2 + 0.5) + margin)) {
-//         boid.dy += turnFactor;
-//     }
-
-//     if ((boid.mesh.position.y > (height / 2 - 0.5) - margin)) {
-//         boid.dy -= turnFactor;
-//     }
-
-//     if ((boid.mesh.position.z > -boidDistance)) {
-//         boid.dz -= turnFactor;
-//     }
-
-//     if ((boid.mesh.position.z < -boidDistance - 50)) {
-//         boid.dz += turnFactor;
-//     }
-// }
-
 function limitSpeed(index) {
   const speedLimit = 0.5;
   const speed = Math.sqrt(boids[index].dx * boids[index].dx + boids[index].dy * boids[index].dy + boids[index].dz * boids[index].dz);
+  
   if (speed > speedLimit) {
     boids[index].dx = (boids[index].dx / speed) * speedLimit;
     boids[index].dy = (boids[index].dy / speed) * speedLimit;
-    boids[index].dz = (boids[index].dz / speed) * speedLimit;
-  }
-
+    // boids[index].dz = (boids[index].dz / speed) * speedLimit;
+  } 
 }
-
-// function limitSpeed(boid) {
-//   const speedLimit = 0.5;
-//   const speed = Math.sqrt(boid.dx * boid.dx + boid.dy * boid.dy + boid.dz * boid.dz);
-//   if (speed > speedLimit) {
-//     boid.dx = (boid.dx / speed) * speedLimit;
-//     boid.dy = (boid.dy / speed) * speedLimit;
-//     boid.dz = (boid.dz / speed) * speedLimit;
-//   }
-
-// }
 
 function distance(boid1, boid2) {
     // boid1/boid2 are indices
@@ -189,13 +142,27 @@ function distance(boid1, boid2) {
     return xDist * xDist + yDist * yDist;
 }
 
-// function distance(boid1, boid2) {
-//     let xDist = boid1.mesh.position.x - boid2.mesh.position.x;
-//     let yDist = boid1.mesh.position.y - boid2.mesh.position.y;
-//     let zDist = boid1.mesh.position.z - boid2.mesh.position.z;
+function getCell(x, y) {
+    let cellX = Math.floor(x / cellSize);
+    let cellY = Math.floor(y / cellSize);
 
-//     return xDist * xDist + yDist * yDist + zDist * zDist;
-// }
+    return `${cellX},${cellY}`
+}
+
+function buildGrid() {
+    grid.clear();
+
+    for (let i = 0; i < boidNum; i++) {
+
+        let key = getCell(boids[i].x, boids[i].y);
+
+        if (!grid.has(key)) {
+            grid.set(key, []);
+        }
+        
+        grid.get(key).push(i);
+    }
+} //buildGrid
 
 // write a character to an html element
 function writeText(char, target) {
@@ -243,68 +210,56 @@ let centerX = 0;
 let centerY = 0;
 
 // add up all the required params for later functions like avg velocity and avg position
-// function collect(boid) {
-    
-//     let minDist = 1.5;
-
-//     for (let bird of boids) {
-//         if (distance(boid, bird) < range * range) {
-//             avgX += bird.dx;
-//             avgY += bird.dy;
-//             centerX += bird.mesh.position.x;
-//             centerY += bird.mesh.position.y;
-
-//             numBoids++;
-//         }
-
-//         if (bird != boid) {
-//             if (distance(boid, bird) < minDist * minDist) {
-//                 moveX += (boid.mesh.position.x - bird.mesh.position.x);
-//                 moveY += (boid.mesh.position.y - bird.mesh.position.y);
-//                 // moveZ += (boid.mesh.position.z - bird.mesh.position.z);
-//             }
-//         }
-//     }
-// } // collect
-
 function collect(boid) {
     // boid is index
-    let minDist = 1.5;
+    let minDist = 2;
 
-    for (let i = 0; i < boidNum; i++) {
-        if (distance(boid, i) < range * range) {
-            avgX += boids[i].dx;
-            avgY += boids[i].dy;
+    let cellX = Math.floor(boids[boid].x / cellSize);
+    let cellY = Math.floor(boids[boid].y / cellSize);
 
-            centerX += boids[i].x;
-            centerY += boids[i].y;
+    let search = Math.ceil(range / cellSize);
 
-            numBoids++;
-        }
+    for (let x = -search; x <= search; x++) {
+        for (let y = -search; y <= search; y++) {
+            let key = `${cellX + x},${cellY + y}`;
 
-        if (boids[i] != boids[boid]) {
-            if (distance(boid, i) < minDist * minDist) {
-                moveX += (boids[boid].x - boids[i].x);
-                moveY += (boids[boid].y - boids[i].y);
-                // moveZ += (boid.mesh.position.z - bird.mesh.position.z);
+            if (!grid.has(key)) continue;
+
+            let neighbors = grid.get(key);
+
+            for (let bird of neighbors) {
+
+                let distQ = distance(boid, bird);
+
+                if (distQ < range * range) {
+                    avgX += boids[bird].dx;
+                    avgY += boids[bird].dy;
+
+                    centerX += boids[bird].x;
+                    centerY += boids[bird].y;
+
+                    numBoids++;
+                }
+
+                if (bird !== boid) {
+                    if (distQ < minDist * minDist && distQ > 0) {
+
+                        let dx = boids[boid].x - boids[bird].x;
+                    let dy = boids[boid].y - boids[bird].y;
+
+                    moveX += dx / distQ;
+                    moveY += dy / distQ;
+
+                        // moveX += (boids[boid].x - boids[bird].x);
+                        // moveY += (boids[boid].y - boids[bird].y);
+                    }
+                }
             }
-        }
-    }
+        } //forY
+    } //forX 
 } // collect
 
 // steer to move towards the average position (center of mass) of local flockmates
-// function cohesion(boid) {
-//     let ratio = 0.009;
-
-//     if (numBoids != 0) {
-//         centerX /= numBoids; 
-//         centerY /= numBoids; 
-//         boid.dx += (centerX - boid.mesh.position.x) * ratio;
-//         boid.dy += (centerY - boid.mesh.position.y) * ratio;
-//     }
-    
-// } // cohesion
-
 function cohesion(boid) {
     // boid is index
     let ratio = 0.009;
@@ -312,71 +267,35 @@ function cohesion(boid) {
     if (numBoids != 0) {
         centerX /= numBoids; 
         centerY /= numBoids; 
-        boids[boid].dx += (centerX - boids[boid].x) * ratio;
-        boids[boid].dy += (centerY - boids[boid].y) * ratio;
+        boids[boid].nextDX += (centerX - boids[boid].x) * ratio;
+        boids[boid].nextDY += (centerY - boids[boid].y) * ratio;
     }
     
 } // cohesion
 
-// function alignment(boid) {
-//     let ratio = 0.05;
-
-//     let num = numBoids - 1;
-
-//     if (num != 0) {
-//         avgX /= num;
-//         avgY /= num;
-
-//         boid.dx += (avgX - boid.dx) * ratio;
-//         boid.dy += (avgY - boid.dy) * ratio;
-//     }
-// } // alignment
-
 function alignment(boid) {
     let ratio = 0.05;
-
-    numBoids--;
 
     if (numBoids != 0) {
         avgX /= numBoids;
         avgY /= numBoids;
 
-        boids[boid].dx += (avgX - boids[boid].dx) * ratio;
-        boids[boid].dy += (avgY - boids[boid].dy) * ratio;
+        boids[boid].nextDX += (avgX - boids[boid].dx) * ratio;
+        boids[boid].nextDY += (avgY - boids[boid].dy) * ratio;
     }
 } // alignment
-
-// function separation(boid) {
-//     let ratio = 0.05;
-
-//     boid.dx += moveX * ratio;
-//     boid.dy += moveY * ratio;
-// } // separation
-
-
-
-// ------------------------------------------------
 
 function separation(boid) {
     let ratio = 0.05;
 
-    boids[boid].dx += moveX * ratio;
-    boids[boid].dy += moveY * ratio;
+    boids[boid].nextDX += moveX * ratio;
+    boids[boid].nextDY += moveY * ratio;
 } // separation
 
 function animate() {
+    buildGrid();
 
   for (let boid = 0; boid < boidNum; boid++) {
-    collect(boid);
-    cohesion(boid);
-    separation(boid);
-    alignment(boid);
-
-    limitSpeed(boid);
-    inBounds(boid);
-    
-    updateMat(boid);
-    // boid.mesh.position.z += boid.dz;
 
     numBoids = 0;
     avgX = 0;
@@ -385,6 +304,24 @@ function animate() {
     moveY = 0;
     centerX = 0;
     centerY = 0;
+
+    collect(boid);
+    cohesion(boid);
+    separation(boid);
+    alignment(boid);
+
+  }
+
+  for (let boid = 0; boid < boidNum; boid++) {
+    boids[boid].dx += boids[boid].nextDX;
+    boids[boid].dy += boids[boid].nextDY;
+
+    limitSpeed(boid);
+    inBounds(boid);
+    updateMat(boid);
+
+    boids[boid].nextDX = 0;
+    boids[boid].nextDY = 0;
   }
 
   cube.instanceMatrix.needsUpdate = true;
