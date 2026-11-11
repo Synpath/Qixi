@@ -41,7 +41,7 @@ function init() {
     });
 
     boidDistance = 20; //20
-    boidNum = 1;
+    boidNum = 2000;
     range = 7;
     cellSize = range;
 
@@ -267,8 +267,8 @@ function cohesion(boid) {
     if (numBoids != 0) {
         centerX /= numBoids; 
         centerY /= numBoids; 
-        boids[boid].nextDX += (centerX - boids[boid].x) * ratio;
-        boids[boid].nextDY += (centerY - boids[boid].y) * ratio;
+        boids[boid].dx += (centerX - boids[boid].x) * ratio;
+        boids[boid].dy += (centerY - boids[boid].y) * ratio;
     }
     
 } // cohesion
@@ -280,16 +280,16 @@ function alignment(boid) {
         avgX /= numBoids;
         avgY /= numBoids;
 
-        boids[boid].nextDX += (avgX - boids[boid].dx) * ratio;
-        boids[boid].nextDY += (avgY - boids[boid].dy) * ratio;
+        boids[boid].dx += (avgX - boids[boid].dx) * ratio;
+        boids[boid].dy += (avgY - boids[boid].dy) * ratio;
     }
 } // alignment
 
 function separation(boid) {
     let ratio = 0.05;
 
-    boids[boid].nextDX += moveX * ratio;
-    boids[boid].nextDY += moveY * ratio;
+    boids[boid].dx += moveX * ratio;
+    boids[boid].dy += moveY * ratio;
 } // separation
 
 function animate() {
@@ -309,19 +309,9 @@ function animate() {
     cohesion(boid);
     separation(boid);
     alignment(boid);
-
-  }
-
-  for (let boid = 0; boid < boidNum; boid++) {
-    boids[boid].dx += boids[boid].nextDX;
-    boids[boid].dy += boids[boid].nextDY;
-
     limitSpeed(boid);
     inBounds(boid);
     updateMat(boid);
-
-    boids[boid].nextDX = 0;
-    boids[boid].nextDY = 0;
   }
 
   cube.instanceMatrix.needsUpdate = true;
