@@ -7,9 +7,9 @@ import * as THREE from 'three'
 
 let scene, camera, renderer
 
-let FOV, boidDistance, height, width
+let FOV, height, width
 
-let boidNum, range, cube, cellSize
+let cube
 
 let boids = [];
 let grid = new Map();
@@ -18,6 +18,13 @@ let dummy = new THREE.Object3D();
 const container = document.getElementById("container");
 const HEIGHT = container.clientHeight;
 const WIDTH = container.clientWidth;
+const MARGINX = 3;
+const MARGINY = 10;
+
+const boidDistance = 20;
+const boidNum = 1500; //2000 limit?
+const range = 7;
+const cellSize = range;
 
 function init() {
     scene = new THREE.Scene();
@@ -33,30 +40,24 @@ function init() {
     renderer.setSize( WIDTH, HEIGHT );
     container.appendChild( renderer.domElement );
 
-    window.addEventListener('resize', () => {
-        camera.aspect = WIDTH / HEIGHT;
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(WIDTH, HEIGHT);
-    });
-
-    boidDistance = 20; //20
-    boidNum = 2000;
-    range = 7;
-    cellSize = range;
-
     FOV = THREE.MathUtils.degToRad(camera.fov);
     height = 2 * Math.tan(FOV / 2) * boidDistance;
     width = height * camera.aspect;
 
-    let geom = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    window.addEventListener('resize', () => {
+        camera.aspect = WIDTH / HEIGHT;
+        camera.updateProjectionMatrix();
+        renderer.setSize(WIDTH, HEIGHT);
+    });
+
+    let geom = new THREE.TetrahedronGeometry(0.5);
     let mat = new THREE.MeshBasicMaterial({color: 0x00ff00});
     cube = new THREE.InstancedMesh(geom, mat, boidNum);
 
     for (let i = 0; i < boidNum; i++) {
 
-        let x = (Math.random() - 0.5) * (width - 0.5);
-        let y = (Math.random() - 0.5) * (height - 0.5);
+        let x = (Math.random() - 0.5) * (width + MARGINX - 0.5);
+        let y = (Math.random() - 0.5) * (height + MARGINY - 0.5);
         let z = -boidDistance;
 
         boids.push({
@@ -65,9 +66,6 @@ function init() {
             dx: Math.random(),
             dy: Math.random(),
             dz: 0,
-
-            nextDX: 0,
-            nextDY:0,
         });
 
         dummy.position.set(x, y, z);
@@ -99,32 +97,30 @@ function updateMat(index) {
 
 function inBounds(index) {
     const turnFactor = 0.015;
-    const marginX = 3; //10
-    const marginY = 10;
 
     let x = boids[index].x;
     let y = boids[index].y;
 
-    if ((x < (-width/2 + 0.5) + marginX)) {
+    if ((x < (-width/2 + 0.5) + MARGINX)) {
         boids[index].dx += turnFactor;
     }
 
-    if ((x > (width / 2 - 0.5) - marginX)) {
+    if ((x > (width / 2 - 0.5) - MARGINX)) {
         boids[index].dx -= turnFactor;
     }
 
-    if ((y < (-height/2 + 0.5) + marginY)) {
+    if ((y < (-height/2 + 0.5) + MARGINY)) {
         boids[index].dy += turnFactor;
     }
 
-    if ((y > (height / 2 - 0.5) - marginY)) {
+    if ((y > (height / 2 - 0.5) - MARGINY)) {
         boids[index].dy -= turnFactor;
     }
 }
 
 function limitSpeed(index) {
   const speedLimit = 0.5;
-  const speed = Math.sqrt(boids[index].dx * boids[index].dx + boids[index].dy * boids[index].dy + boids[index].dz * boids[index].dz);
+  const speed = Math.sqrt(boids[index].dx * boids[index].dx + boids[index].dy * boids[index].dy);
   
   if (speed > speedLimit) {
     boids[index].dx = (boids[index].dx / speed) * speedLimit;
@@ -135,6 +131,7 @@ function limitSpeed(index) {
 
 function distance(boid1, boid2) {
     // boid1/boid2 are indices
+    // returns squared distance to avoid costly square root
 
     let xDist = boids[boid1].x - boids[boid2].x;
     let yDist = boids[boid1].y - boids[boid2].y;
@@ -238,20 +235,17 @@ function collect(boid) {
                     centerX += boids[bird].x;
                     centerY += boids[bird].y;
 
-                    numBoids++;
+                    numBoids++;       
                 }
 
                 if (bird !== boid) {
                     if (distQ < minDist * minDist && distQ > 0) {
 
                         let dx = boids[boid].x - boids[bird].x;
-                    let dy = boids[boid].y - boids[bird].y;
+                        let dy = boids[boid].y - boids[bird].y;
 
-                    moveX += dx / distQ;
-                    moveY += dy / distQ;
-
-                        // moveX += (boids[boid].x - boids[bird].x);
-                        // moveY += (boids[boid].y - boids[bird].y);
+                        moveX += dx / distQ;
+                        moveY += dy / distQ;
                     }
                 }
             }
@@ -264,25 +258,22 @@ function cohesion(boid) {
     // boid is index
     let ratio = 0.009;
 
-    if (numBoids != 0) {
-        centerX /= numBoids; 
-        centerY /= numBoids; 
-        boids[boid].dx += (centerX - boids[boid].x) * ratio;
-        boids[boid].dy += (centerY - boids[boid].y) * ratio;
-    }
+    centerX /= numBoids; 
+    centerY /= numBoids; 
+    boids[boid].dx += (centerX - boids[boid].x) * ratio;
+    boids[boid].dy += (centerY - boids[boid].y) * ratio;
     
 } // cohesion
 
 function alignment(boid) {
     let ratio = 0.05;
 
-    if (numBoids != 0) {
-        avgX /= numBoids;
-        avgY /= numBoids;
+    avgX /= numBoids;
+    avgY /= numBoids;
 
-        boids[boid].dx += (avgX - boids[boid].dx) * ratio;
-        boids[boid].dy += (avgY - boids[boid].dy) * ratio;
-    }
+    boids[boid].dx += (avgX - boids[boid].dx) * ratio;
+    boids[boid].dy += (avgY - boids[boid].dy) * ratio;
+    
 } // alignment
 
 function separation(boid) {
