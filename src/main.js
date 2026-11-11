@@ -22,7 +22,8 @@ const MARGINX = 3;
 const MARGINY = 10;
 
 const boidDistance = 20;
-const boidNum = 1500; //2000 limit?
+const maxBoids = 2000;
+const boidNum = 1; //2000 limit?
 const range = 7;
 const cellSize = range;
 

@@ -4,6 +4,8 @@
 4. vega and altair in the background moving towards each other
 5. basic lighting (ambient) w/ shaders (no time or compute to do more complex lighting?)
 
+- fix text styling (shrink/grow with window size, always in window when resizing)
+
 STRETCH: 
     - clickable boids that open and close a text overlay
     - bird model
