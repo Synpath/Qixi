@@ -4,12 +4,20 @@ let boids = [];
 let grid = new Map();
 let dummy = new THREE.Object3D();
 
-const MARGINX = 3;
-const MARGINY = 10;
+// can modify these when spawning more boids
+let MARGINX = 3;
+let MARGINY = 10;
+let speedLimit = 0.5;
+export let boidNum = 5;
+let cohFactor = 0.009;
+let alignFactor = 0.05;
+let sepFactor = 0.05;
+let turnFactor = 0.015;
+let minDist = 2;
 
 const boidDistance = 20;
+const boidSize = 0.5;
 const maxBoids = 2000; //2000 limit?
-export const boidNum = 5; 
 const range = 7;
 const cellSize = range;
 
@@ -22,15 +30,15 @@ export function initBoids(scene, camera) {
     height = 2 * Math.tan(FOV / 2) * boidDistance;
     width = height * camera.aspect;
 
-    let geom = new THREE.TetrahedronGeometry(0.5);
+    let geom = new THREE.TetrahedronGeometry(boidSize);
     let mat = new THREE.MeshBasicMaterial({color: 0x00ff00});
     cube = new THREE.InstancedMesh(geom, mat, maxBoids);
     cube.count = boidNum;
 
     for (let i = 0; i < boidNum; i++) {
 
-        let x = (Math.random() - 0.5) * (width + MARGINX - 0.5);
-        let y = (Math.random() - 0.5) * (height + MARGINY - 0.5);
+        let x = (Math.random() - boidSize) * (width + MARGINX - boidSize);
+        let y = (Math.random() - boidSize) * (height + MARGINY - boidSize);
         let z = -boidDistance;
 
         boids.push({
@@ -75,30 +83,28 @@ export function updateMat(index) {
 } // updateMat
 
 export function inBounds(index) {
-    const turnFactor = 0.015;
 
     let x = boids[index].x;
     let y = boids[index].y;
 
-    if ((x < (-width/2 + 0.5) + MARGINX)) {
+    if ((x < (-width/2 + boidSize) + MARGINX)) {
         boids[index].dx += turnFactor;
     }
 
-    if ((x > (width / 2 - 0.5) - MARGINX)) {
+    if ((x > (width / 2 - boidSize) - MARGINX)) {
         boids[index].dx -= turnFactor;
     }
 
-    if ((y < (-height/2 + 0.5) + MARGINY)) {
+    if ((y < (-height/2 + boidSize) + MARGINY)) {
         boids[index].dy += turnFactor;
     }
 
-    if ((y > (height / 2 - 0.5) - MARGINY)) {
+    if ((y > (height / 2 - boidSize) - MARGINY)) {
         boids[index].dy -= turnFactor;
     }
 } // inBounds
 
 export function limitSpeed(index) {
-  const speedLimit = 0.5;
   const speed = Math.sqrt(boids[index].dx * boids[index].dx + boids[index].dy * boids[index].dy);
   
   if (speed > speedLimit) {
@@ -109,7 +115,7 @@ export function limitSpeed(index) {
 
 // returns squared distance to avoid costly square root
 // boid1/boid2 are indices
-export function distance(boid1, boid2) {
+function distance(boid1, boid2) {
 
     let xDist = boids[boid1].x - boids[boid2].x;
     let yDist = boids[boid1].y - boids[boid2].y;
@@ -118,7 +124,7 @@ export function distance(boid1, boid2) {
 } // distance
 
 // get the cell coordinates that a boid is in based on its x/y coords
-export function getCell(x, y) {
+function getCell(x, y) {
     let cellX = Math.floor(x / cellSize);
     let cellY = Math.floor(y / cellSize);
 
@@ -151,9 +157,9 @@ let centerY = 0;
 
 // aggregate all appropriate variables used for the boid algorithm rules
 // avoids having to run a for loop for each boid
+// also includes its itself in the collection
 // boid is index
 export function collect(boid) {
-    let minDist = 2;
 
     let cellX = Math.floor(boids[boid].x / cellSize);
     let cellY = Math.floor(boids[boid].y / cellSize);
@@ -170,9 +176,9 @@ export function collect(boid) {
 
             for (let bird of neighbors) {
 
-                let distQ = distance(boid, bird);
+                let dist = distance(boid, bird);
 
-                if (distQ < range * range) {
+                if (dist < range * range) {
                     avgX += boids[bird].dx;
                     avgY += boids[bird].dy;
 
@@ -183,13 +189,13 @@ export function collect(boid) {
                 }
 
                 if (bird !== boid) {
-                    if (distQ < minDist * minDist && distQ > 0) {
+                    if (dist < minDist * minDist && dist > 0) {
 
                         let dx = boids[boid].x - boids[bird].x;
                         let dy = boids[boid].y - boids[bird].y;
 
-                        moveX += dx / distQ;
-                        moveY += dy / distQ;
+                        moveX += dx / dist;
+                        moveY += dy / dist;
                     }
                 }
             }
@@ -200,33 +206,30 @@ export function collect(boid) {
 // steer to move towards the average position (center of mass) of local flockmates
 // boid is index
 export function cohesion(boid) {
-    let ratio = 0.009;
 
     centerX /= numBoids; 
     centerY /= numBoids; 
-    boids[boid].dx += (centerX - boids[boid].x) * ratio;
-    boids[boid].dy += (centerY - boids[boid].y) * ratio;
+    boids[boid].dx += (centerX - boids[boid].x) * cohFactor;
+    boids[boid].dy += (centerY - boids[boid].y) * cohFactor;
     
 } // cohesion
 
 // adjusts boid velocities to align with the average velocity of the flock
 // boid is index
 export function alignment(boid) {
-    let ratio = 0.05;
 
     avgX /= numBoids;
     avgY /= numBoids;
 
-    boids[boid].dx += (avgX - boids[boid].dx) * ratio;
-    boids[boid].dy += (avgY - boids[boid].dy) * ratio;
+    boids[boid].dx += (avgX - boids[boid].dx) * alignFactor;
+    boids[boid].dy += (avgY - boids[boid].dy) * alignFactor;
     
 } // alignment
 
 // steers boids away from one another
 // boid is index
 export function separation(boid) {
-    let ratio = 0.05;
 
-    boids[boid].dx += moveX * ratio;
-    boids[boid].dy += moveY * ratio;
+    boids[boid].dx += moveX * sepFactor;
+    boids[boid].dy += moveY * sepFactor;
 } // separation
