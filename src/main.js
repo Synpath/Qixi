@@ -10,13 +10,9 @@ import {collect, cohesion, alignment, separation} from './boids.js'
 
 let scene, camera, renderer
 
-let FOV, height, width
-
-let cube
-
 const container = document.getElementById("container");
-const HEIGHT = container.clientHeight;
-const WIDTH = container.clientWidth;
+let HEIGHT = container.clientHeight;
+let WIDTH = container.clientWidth;
 
 function init() {
     scene = new THREE.Scene();
@@ -27,12 +23,15 @@ function init() {
 
     renderer = new THREE.WebGLRenderer({ 
         canvas: document.getElementById("canvas"),
-        antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+        antialias: false }),
+    renderer.setPixelRatio(1);
+
     renderer.setSize( WIDTH, HEIGHT );
-    container.appendChild( renderer.domElement );
+    container.appendChild( renderer.domElement ); 
 
     window.addEventListener('resize', () => {
+        HEIGHT = container.clientHeight;
+        WIDTH = container.clientWidth;
         camera.aspect = WIDTH / HEIGHT;
         camera.updateProjectionMatrix();
         renderer.setSize(WIDTH, HEIGHT);
@@ -82,10 +81,12 @@ function typeWriter(text, targetElement, speed, script) {
   });
 } // typeWriter
 
-
 function animate() {
     buildGrid();
 
+  // TODO: could parallelize this?
+  // only caveat is that it wouldnt take into account old boid data which allows the swarm
+  // to keep moving around AFAIK
   for (let boid = 0; boid < boidNum; boid++) {
     zeroOut();
     collect(boid);
@@ -100,6 +101,7 @@ function animate() {
   updateInstance();
   renderer.render( scene, camera );
   requestAnimationFrame(animate);
+
 }
 
 init();

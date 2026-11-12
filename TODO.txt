@@ -7,6 +7,8 @@
 - fix text styling (shrink/grow with window size, always in window when resizing)
 - check if boids work when resizing
 - make birds rotate to face direction when turning
+- fix the resizing thing
+
 
 STRETCH: 
     - clickable boids that open and close a text overlay
