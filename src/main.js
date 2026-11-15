@@ -48,7 +48,7 @@ async function init() {
     });
 
     initBoids(scene, camera);
-    textMap = await prepText();
+    textMap = prepText();
     printText();
     animate();
 }

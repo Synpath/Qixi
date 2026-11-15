@@ -1,4 +1,6 @@
-const json = "./text.json"
+import data from './text.json'
+
+const json = "./src/text.json"
 const regularPause = 550;
 const forwardPause = 800;
 const periodPause = 400;
@@ -68,9 +70,7 @@ export async function reverseType(targetElement, speed) {
     }
 } // reverseType
 
-export async function prepText() {
-  const response = await fetch(json);
-  const data = await response.json();
+export function prepText() {
 
   let map = new Map(
     Object.entries(data).map(([key, value]) => [
