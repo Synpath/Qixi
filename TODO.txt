@@ -1,5 +1,4 @@
 
-3. add text!!!!!
 4. vega and altair in the background moving towards each other
 5. basic lighting (ambient) w/ shaders (no time or compute to do more complex lighting?)
 

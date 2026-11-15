@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {boidNum, height, width} from './boids.js'
 import {zeroOut, updateInstance, initBoids, updateMat, inBounds, limitSpeed, buildGrid, createBoid} from './boids.js'
 import {collect, cohesion, alignment, separation} from './boids.js'
+import {typeWriter, reverseType, prepText} from './text.js'
 
 // const clock = new THREE.Timer();
 
@@ -11,10 +12,15 @@ import {collect, cohesion, alignment, separation} from './boids.js'
 
 let scene, camera, renderer
 let textMap
+
+const target = "textBox"
 const numLines = 21;
+const typeSpeed = 35;
+const untypeSpeed = 50;
+const blankTime = 4000;
 
 const container = document.getElementById("container");
-const json = "./src/text.json"
+
 let HEIGHT = container.clientHeight;
 let WIDTH = container.clientWidth;
 
@@ -43,111 +49,23 @@ async function init() {
 
     initBoids(scene, camera);
     textMap = await prepText();
-    test();
+    printText();
     animate();
 }
 
-async function prepText() {
-  const response = await fetch(json);
-  const data = await response.json();
+async function printText() {
 
-  let map = new Map(
-    Object.entries(data).map(([key, value]) => [
-      Number(key),
-      {
-        text: value.text,
-        num: value.num
-      }
-    ])
-  );
+  for (let i = 0; i < numLines; i++) {
+    let item = textMap.get(i);
 
-  return map;
-} // prepText
-
-async function printText(test) {
-  await typeWriter(test.text, "textBox", 35, false); //90?
-  await reverseTypeWriter("textBox", 50);
-  createBoid(width, height, test.num - boidNum, boidNum)
-  await new Promise((resolve) => setTimeout(resolve, 4000));
+    await typeWriter(item.text, target, typeSpeed); 
+    await reverseType(target, untypeSpeed);
+    createBoid(width, height, item.num - boidNum, boidNum)
+    await new Promise((resolve) => setTimeout(resolve, blankTime));
+  }
 }
-
-async function test() {
-      for (let i = 0; i < numLines; i++) {
-      await printText(textMap.get(i));
-    }
-}
-
-async function reverseTypeWriter(targetElement, speed) {
-
-    let textCon = document.getElementById(targetElement).textContent;
-    let target = document.getElementById(targetElement)
-
-    for (let i = textCon.length; i > 0; i -= 3) {
-
-        target.textContent = textCon.substring(0, i - 3);
-
-        await new Promise(resolve => setTimeout(resolve, speed));
-
-    }
-} // reverseTypeWriter
 
 // -----------------------------------------------
-// write a character to an html element
-function writeText(char, target) {
-    if (char === '\n') {
-      document.getElementById(target).innerHTML += '<br>'; // Add a line break
-    } else {
-      document.getElementById(target).innerHTML += char;
-    }
-}
-
-// targetElement: string name of the element
-// text: string or variable pointing to the HTML element containing the text you want to print
-// script: boolean to switch between string or element text
-function typeWriter(text, targetElement, speed, script) {
-    let textCon;
-
-    if (script) {
-      textCon = document.getElementById(text).textContent;
-    } else {
-      textCon = text;
-    }
-
-  return new Promise(async (resolve) => {
-
-    let i = 0;
-
-    while (i < textCon.length) {
-      let char = textCon.charAt(i);
-      let temp = char;
-
-      if (char == ']') {
-        char = ','
-      } else if (char == '/') {
-        char = ' ';
-      }
-
-      writeText(char, targetElement);
-      char = temp;
-
-      if (char === '\n' || char === ',' || char === '?') {
-        await new Promise((resolve) => setTimeout(resolve, 550)); 
-      } else if (char == '/') {
-        await new Promise(resolve => setTimeout(resolve, 800));
-      } else if (char === '.') {
-        await new Promise((resolve) => setTimeout(resolve, 400));
-      }
-      else {
-        await new Promise(resolve => setTimeout(resolve, speed));
-      }
-
-      i++;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 1300));
-    resolve();
-  });
-} // typeWriter
 
 function animate() {
     buildGrid();
