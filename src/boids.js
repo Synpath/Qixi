@@ -5,10 +5,10 @@ let grid = new Map();
 let dummy = new THREE.Object3D();
 
 // can modify these when spawning more boids
-let MARGINX = 3;
-let MARGINY = 10;
-let speedLimit = 0.5;
-export let boidNum = 2000;
+let MARGINX = 3 //3 ( < 2000) //1 (2000 boids)
+let MARGINY = 10 //10 //5
+let speedLimit = 0.68; //0.7? // 0.5 (looks more like schooling fish) //0.8? (more birdish but more separated)
+export let boidNum = 1;
 let cohFactor = 0.009;
 let alignFactor = 0.05;
 let sepFactor = 0.05;
@@ -21,7 +21,7 @@ const maxBoids = 2000; //2000 limit?
 const range = 7;
 const cellSize = range;
 
-let height, width, FOV
+export let height, width, FOV
 let cube
 
 // HELPERS -----------------------------
@@ -31,30 +31,22 @@ export function initBoids(scene, camera) {
     width = height * camera.aspect;
 
     let geom = new THREE.TetrahedronGeometry(boidSize);
-    let mat = new THREE.MeshBasicMaterial({color: 0x00ff00});
+    let mat = new THREE.MeshBasicMaterial({color: 0x3b6878}); //0x00ff00 // 0x3b6878
     cube = new THREE.InstancedMesh(geom, mat, maxBoids);
     cube.count = boidNum;
 
-    for (let i = 0; i < boidNum; i++) {
-
-        let x = (Math.random() - boidSize) * (width + MARGINX - boidSize);
-        let y = (Math.random() - boidSize) * (height + MARGINY - boidSize);
-        let z = -boidDistance;
-
-        boids.push({
-            x: x,
-            y: y,
-            dx: Math.random(),
-            dy: Math.random(),
-            dz: 0,
-        });
-
-        dummy.position.set(x, y, z);
-        dummy.updateMatrix();
-
-        cube.setMatrixAt(i, dummy.matrix);
-    }
+    createBoid(width, height, boidNum, 0);
     scene.add(cube);
+
+    document.addEventListener('keyup', function(event) {
+
+        if ((event.key == " ")) {
+            createBoid(width, height, 4, boidNum);
+        }
+
+        cube.instanceMatrix.needsUpdate = true;
+    });   
+
 } // initBoids
 
 // reset collection variables
@@ -145,6 +137,38 @@ export function buildGrid() {
         grid.get(key).push(i);
     }
 } //buildGrid
+
+// num: number of boids to create
+// startIndex: 
+export function createBoid(width, height, num, startIndex) {
+    for (let i = startIndex; i < num + startIndex; i++) {
+        let x = (Math.random() - boidSize) * (width + MARGINX - boidSize);
+        let y = (Math.random() - boidSize) * (height + MARGINY - boidSize);
+        let z = -boidDistance;
+
+        if (boidNum + startIndex == 1) {
+            x = 0;
+            y = 0;
+        }
+
+        boids.push({
+            x: x,
+            y: y,
+            dx: Math.random(),
+            dy: Math.random(),
+            dz: 0,
+        });
+
+        dummy.position.set(x, y, z);
+        dummy.updateMatrix();
+
+        cube.setMatrixAt(i, dummy.matrix); 
+    }
+
+    boidNum = num + startIndex;
+    cube.count = boidNum;
+    cube.instanceMatrix.needsUpdate = true;
+}
 
 // BOIDS ---------------------
 let avgX = 0;

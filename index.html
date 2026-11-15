@@ -27,7 +27,7 @@
 
     #text {
         position: absolute;
-        top: 90%;
+        top: 85%;
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 10;
@@ -35,6 +35,7 @@
         color: white;
         text-align: center;
         pointer-events: none;
+        font-size: clamp(1.5rem, 1.5vw, 3rem);
     }
 
 </style>
@@ -43,7 +44,7 @@
     <canvas id="canvas"></canvas>
 
     <div id="text">
-        <p id="textBox">hello!</p>
+        <p id="textBox"></p>
     </div>
 </div>
 
