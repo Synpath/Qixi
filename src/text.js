@@ -1,4 +1,4 @@
-const json = "./src/text.json"
+const json = "./text.json"
 const regularPause = 550;
 const forwardPause = 800;
 const periodPause = 400;
