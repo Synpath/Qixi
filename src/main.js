@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import birdUrl from './src/assets/Magpie.mp3'
+import birdUrl from './assets/Magpie.mp3'
 import {boidNum, height, width} from './boids.js'
 import {zeroOut, updateInstance, initBoids, updateMat, inBounds, limitSpeed, buildGrid, createBoid} from './boids.js'
 import {collect, cohesion, alignment, separation} from './boids.js'
