@@ -31,7 +31,7 @@ export function initBoids(scene, camera) {
     width = height * camera.aspect;
 
     let geom = new THREE.TetrahedronGeometry(boidSize);
-    let mat = new THREE.MeshBasicMaterial({color: 0x3b6878}); //0x00ff00 // 0x3b6878
+    let mat = new THREE.MeshBasicMaterial({color: 0x32a8c2}); //0x00ff00 // 0x3b6878
     cube = new THREE.InstancedMesh(geom, mat, maxBoids);
     cube.count = boidNum;
 
@@ -66,9 +66,12 @@ export function updateInstance() {
 
 export function updateMat(index) {
 
+    let angle = Math.atan2(boids[index].dy, boids[index].dx);
+
     boids[index].x += boids[index].dx;
     boids[index].y += boids[index].dy;
 
+    dummy.rotation.set(0, 0, angle);
     dummy.position.set(boids[index].x, boids[index].y, -boidDistance);
     dummy.updateMatrix();
     cube.setMatrixAt(index, dummy.matrix);
