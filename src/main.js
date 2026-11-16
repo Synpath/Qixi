@@ -34,11 +34,6 @@ function initScene() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x470e01);
-    // const loader = new THREE.TextureLoader();
-    // loader.load('./src/assets/galaxy.png', function(texture) {
-    //   scene.background = texture;
-    //   scene.backgroundIntensity = 0.1;
-    // });
 
     camera = new THREE.PerspectiveCamera( 75, WIDTH / HEIGHT, 0.1, 1000 );
     camera.position.set(0, 0, 0);
@@ -47,7 +42,7 @@ function initScene() {
     audioLoader.load(birdUrl, function (buffer) {
       birdCall.setBuffer(buffer);
       birdCall.setLoop(true);
-      birdCall.setVolume(0.1);
+      birdCall.setVolume(0.3);
     });
 
     renderer = new THREE.WebGLRenderer({ 
@@ -92,6 +87,8 @@ async function printText() {
     createBoid(width, height, item.num - boidNum, boidNum)
     await new Promise((resolve) => setTimeout(resolve, blankTime));
   }
+
+  birdCall.pause();
 }
 
 // -----------------------------------------------

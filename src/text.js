@@ -54,7 +54,7 @@ export function typeWriter(text, targetElement, speed) {
 
       sfx.setDetune((Math.random() * 600) - 150); 
       sfx.setPlaybackRate(Math.random() * 1.5 + 1)
-      sfx.setVolume(Math.random() * 2);
+      sfx.setVolume(Math.random() * 3);
       sfx.play();
       writeText(char, targetElement);
       
@@ -86,7 +86,7 @@ export async function reverseType(targetElement, speed) {
 
     for (let i = textCon.length; i > 0; i -= 3) {
 
-        sfx.setDetune(1100);
+        sfx.setDetune(1300);
         sfx.setPlaybackRate(2.0);
         sfx.setVolume(1.5);
         sfx.play();      
