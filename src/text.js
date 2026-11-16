@@ -1,4 +1,5 @@
 import data from './text.json'
+import textUrl from './assets/Type.mp3'
 import * as THREE from 'three';
 
 const json = "./src/text.json"
@@ -13,7 +14,7 @@ export function loadSFX(audioLoader, listener) {
 
   return new Promise((resolve) => {
     sfx = new THREE.Audio(listener);
-    audioLoader.load('./src/assets/Type.mp3', function (buffer) {
+    audioLoader.load(textUrl, function (buffer) {
       sfx.setBuffer(buffer)
       sfx.setVolume(0.2);
       resolve(sfx)

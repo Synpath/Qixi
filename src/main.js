@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import birdUrl from './src/assets/Magpie.mp3'
 import {boidNum, height, width} from './boids.js'
 import {zeroOut, updateInstance, initBoids, updateMat, inBounds, limitSpeed, buildGrid, createBoid} from './boids.js'
 import {collect, cohesion, alignment, separation} from './boids.js'
@@ -43,7 +44,7 @@ function initScene() {
     camera.position.set(0, 0, 0);
     camera.add(listener);
 
-    audioLoader.load('./src/assets/Magpie.mp3', function (buffer) {
+    audioLoader.load(birdUrl, function (buffer) {
       birdCall.setBuffer(buffer);
       birdCall.setLoop(true);
       birdCall.setVolume(0.1);
