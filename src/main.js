@@ -33,7 +33,7 @@ let WIDTH = container.clientWidth;
 function initScene() {
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    scene.background = new THREE.Color(0x470e01);
     // const loader = new THREE.TextureLoader();
     // loader.load('./src/assets/galaxy.png', function(texture) {
     //   scene.background = texture;
@@ -65,7 +65,7 @@ function initScene() {
         camera.updateProjectionMatrix();
         renderer.setSize(WIDTH, HEIGHT);
     });
-
+    renderer.render(scene, camera);
 } // initScene
 
 async function init() {
@@ -123,11 +123,12 @@ function animate(timestamp) {
   renderer.render( scene, camera );
 }
 
+initScene();
+
 document.addEventListener('keyup', function(event) {
   if (event.key == 'Enter') {
+      scene.background.set(0x000000);
       init();
       console.log("hello");
   }
 }, {once: true});
-
-initScene();
